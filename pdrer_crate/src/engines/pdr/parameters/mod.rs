@@ -188,7 +188,7 @@ impl PropertyDirectedReachabilityParameters {
         // condense_always: false,
         min_match_count_to_add_definition: 1,
         // min_pair_count_to_add_and_definition: 1,
-        generalize_using_ctg: false,
+        generalize_using_ctg: true,
         generalize_using_ctg_max_depth: 1,
         generalize_using_ctg_max_ctgs: 3,
     };
