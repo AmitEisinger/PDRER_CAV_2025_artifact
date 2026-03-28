@@ -101,7 +101,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                             .weights
                             .borrow_mut()
                             .update_weights_on_add(de.clause().iter());
-                        self.insert_clause_to_exact_frame(de, j, false);
+                        self.insert_clause_to_highest_frame_possible(de.unpack_clause(), j);
                     } else {
                         ctgs = 0;
                         *clause = clause
