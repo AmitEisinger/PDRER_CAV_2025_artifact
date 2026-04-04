@@ -212,7 +212,8 @@ impl<T: PropertyDirectedReachabilitySolver> Solvers<T> {
                     removed.push(l);
                 }
             }
-            let mut result_clause = result.to_owned().iter().collect::<Clause>();
+
+            let mut result_clause = Clause::from_sequence(result.iter().collect());
             if !self
                 .s
                 .fin_state
