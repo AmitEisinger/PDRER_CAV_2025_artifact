@@ -471,6 +471,8 @@ fn main() -> ExitCode {
         print_if_verbose!(args.verbose, "Result checked successfully!");
     }
 
+    println!("Successful UC tricks: {:?}", solver.s.pdr_stats.borrow().get_uc_trick_shortcuts());
+
     // print result
     let r = match &pr {
         ProofResult::Ok(p) => declare_un_sat(&args, &aig, &t, p, |s| {
