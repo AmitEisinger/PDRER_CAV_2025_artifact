@@ -2,6 +2,7 @@
 // use
 // ************************************************************************************************
 
+use fxhash::FxHashSet;
 use super::Frames;
 use crate::engines::pdr::PropertyDirectedReachabilitySolver;
 use crate::formulas::{Clause, Literal};
@@ -19,7 +20,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
     // ********************************************************************************************
 
     // MIC method
-    fn mic(&mut self, clause: &mut Vec<Literal>, k: usize, d: usize) {
+    fn mic(&mut self, clause: &mut Vec<Literal>, k: usize, d: usize, keep : &mut FxHashSet<Literal>) {
         // iterate ove the literals of the original clause
         let literals = clause.clone();
         for l in literals {
@@ -39,23 +40,29 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                 continue;
             }
 
-            if self.ctg_down(&mut clause_clone, k, d) {
+            if self.ctg_down(&mut clause_clone, k, d, keep) {
                 *clause = clause_clone;
+            } else {
+                keep.insert(l);
             }
         }
     }
 
     // Helper method `ctg_down`
-    fn ctg_down(&mut self, clause: &mut Vec<Literal>, k: usize, d: usize) -> bool {
+    fn ctg_down(&mut self, clause: &mut Vec<Literal>, k: usize, d: usize, keep: &mut FxHashSet<Literal>) -> bool {
         if d > self.s.parameters.generalize_using_ctg_max_depth {
             let c = Clause::from_sequence(clause.clone());
             if !self.is_clause_satisfied_by_all_initial_states(&c) {
                 return false;
             }
-            if !self.is_clause_guaranteed_after_transition_if_assumed(&c, k) {
-                return false;
-            }
-            return true;
+
+            return match self.is_clause_guaranteed_after_transition_if_assumed_and_get_new_lemma(&c, k) {
+                Some(new_clause) => {
+                    *clause = new_clause.unpack().unpack().unpack();
+                    true
+                }
+                None => { false }
+            };
         }
 
         let mut ctgs = 0;
@@ -93,7 +100,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                             .weights
                             .borrow()
                             .sort_literals_by_weights_fast(&mut clause_to_add);
-                        self.mic(&mut clause_to_add, j - 1, d + 1);
+                        self.mic(&mut clause_to_add, j - 1, d + 1, keep);
                         let clause_to_add = Clause::from_sequence(clause_to_add);
 
                         let de = self.make_delta_element(clause_to_add);
@@ -132,7 +139,9 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
             .iter()
             .all(|l| self.s.fin_state.borrow().is_state_literal(l)));
 
-        self.mic(&mut clause, k, 1);
+        let mut keep : FxHashSet<Literal> = FxHashSet::default();
+
+        self.mic(&mut clause, k, 1, &mut keep);
 
         Clause::from_sequence(clause)
     }
