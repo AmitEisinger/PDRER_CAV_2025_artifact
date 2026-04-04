@@ -3,7 +3,7 @@
 // ************************************************************************************************
 
 use super::FiniteStateTransitionSystem;
-use crate::formulas::{Clause, Variable};
+use crate::formulas::{Clause, Literal, Variable};
 use crate::formulas::{Cube, CNF};
 use crate::models::UniqueSortedVec;
 
@@ -34,6 +34,10 @@ impl FiniteStateTransitionSystem {
 
     pub fn get_initial_relation(&self) -> &Cube {
         &self.initial_states
+    }
+
+    pub fn  is_literal_in_initial_relation(&self, literal: &Literal) -> bool {
+        self.initial_states.contains(literal)
     }
 
     // ********************************************************************************************

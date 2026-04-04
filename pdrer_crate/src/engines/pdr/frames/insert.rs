@@ -268,20 +268,34 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
         &mut self,
         clause: Clause,
         mut k: usize,
+        uc_trick: bool
     ) -> usize {
         let _timer = FunctionTimer::start(function!(), self.s.time_stats.clone());
 
         debug_assert!(!clause.is_empty());
 
         // let mut another_iteration = true;
-        while k < self.depth() {
-            if self.is_clause_guaranteed_after_transition_if_assumed(&clause, k) {
-                k += 1;
-            } else {
-                break;
+        
+        if !uc_trick {
+            while k < self.depth() {
+                if self.is_clause_guaranteed_after_transition_if_assumed(&clause, k) {
+                    k += 1;
+                } else {
+                    break;
+                }
+            }    
+        } else {
+            let mut current_lemma = clause.clone();
+            while k < self.depth() {
+                if  let Some(lemma) = self.is_clause_guaranteed_after_transition_if_assumed_and_get_new_lemma(&current_lemma, k) {
+                    current_lemma = lemma;
+                    k += 1;
+                } else {
+                    break;
+                }
             }
         }
-
+        
         let de = self.make_delta_element(clause);
         self.insert_clause_to_exact_frame(de, k, false);
 

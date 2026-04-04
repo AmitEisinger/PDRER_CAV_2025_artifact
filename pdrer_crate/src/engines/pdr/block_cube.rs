@@ -41,7 +41,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager>
         // self.weights_of_literals_in_clause
         //     .update_weights_on_add(clause.iter());
         self.frames
-            .insert_clause_to_highest_frame_possible(clause, k)
+            .insert_clause_to_highest_frame_possible(clause, k,true)
     }
 
     pub fn add_to_f_inf(&mut self, clause: Clause) {

@@ -44,6 +44,12 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
         self.solvers
             .is_clause_guaranteed_after_transition_if_assumed(k, clause)
     }
+    
+    pub fn is_clause_guaranteed_after_transition_if_assumed_and_get_new_lemma(&mut self,
+                                                                              clause: &Clause,
+                                                                              k: usize) -> Option<Clause> {
+        self.solvers.is_clause_guaranteed_after_transition_if_assumed_and_return_new_lemma(k, clause)
+    }
 
     // pub fn get_state_in_clause_a_that_has_a_predecessor_not_in_clause_b(
     //     &mut self,

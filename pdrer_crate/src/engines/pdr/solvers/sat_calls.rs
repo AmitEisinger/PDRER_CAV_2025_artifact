@@ -16,7 +16,7 @@ use std::cell::RefCell;
 use std::iter;
 use std::rc::Rc;
 
-use super::Solvers;
+use super::{SolverHolder, Solvers};
 
 // ************************************************************************************************
 // impl
@@ -193,6 +193,52 @@ impl<T: PropertyDirectedReachabilitySolver> Solvers<T> {
             SatResult::Sat => false,
             SatResult::UnSat => true,
         }
+    }
+
+    pub fn is_clause_guaranteed_after_transition_if_assumed_and_return_new_lemma(
+        &mut self,
+        frame: usize,
+        clause: &Clause,
+    ) -> Option<Clause> {
+        if self.is_clause_guaranteed_after_transition_if_assumed(frame, clause) {
+            let mut result = Vec::new();
+            let mut removed = Vec::new();
+            for l in clause.iter() {
+                let mut l_tag = l.to_owned();
+                self.s.fin_state.borrow().add_tags_to_literal(&mut l_tag, 1);
+                if Self::failed(&mut self.h, &self.var_map, frame, !l_tag) {
+                    result.push(l);
+                } else {
+                    removed.push(l);
+                }
+            }
+            let mut result_clause = result.to_owned().into_iter().collect::<Clause>();
+            if !self
+                .s
+                .fin_state
+                .borrow()
+                .is_clause_satisfied_by_all_initial_states(&result_clause)?
+            {
+                let clauses_to_add = removed
+                    .iter()
+                    .find(|x| self.s.fin_state.borrow().is_literal_in_initial_relation(x))
+                    .copied();
+                if let Some(clauses_to_add) = clauses_to_add {
+                    result_clause.insert(clauses_to_add.to_owned());
+                } else {
+                    return Some(clause.to_owned());
+                }
+            }
+            if result.len() > 0 {
+                debug_assert!(self
+                    .s
+                    .fin_state
+                    .borrow()
+                    .is_clause_satisfied_by_all_initial_states(&result_clause));
+                return Some(result_clause);
+            }
+        }
+        None
     }
 
     pub fn is_clause_guaranteed_after_transition_if_assumed(
