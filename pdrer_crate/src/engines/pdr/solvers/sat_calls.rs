@@ -212,7 +212,7 @@ impl<T: PropertyDirectedReachabilitySolver> Solvers<T> {
                     removed.push(l);
                 }
             }
-            let mut result_clause = result.to_owned().into_iter().collect::<Clause>();
+            let mut result_clause = result.to_owned().iter().collect::<Clause>();
             if !self
                 .s
                 .fin_state
@@ -234,7 +234,7 @@ impl<T: PropertyDirectedReachabilitySolver> Solvers<T> {
                     .s
                     .fin_state
                     .borrow()
-                    .is_clause_satisfied_by_all_initial_states(&result_clause));
+                    .is_clause_satisfied_by_all_initial_states(&result_clause).unwrap_or(true));
                 return Some(result_clause);
             }
         }
