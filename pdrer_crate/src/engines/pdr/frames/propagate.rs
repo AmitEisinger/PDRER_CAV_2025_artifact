@@ -270,6 +270,29 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
             .any(|a| clause.iter().all(|cl| !a.contains(cl)))
     }
 
+    fn is_guaranteed_cached_and_refine_clause(
+        &mut self,
+        assignments: &mut Vec<Cube>,
+        k: usize,
+        clause: &Clause,
+    ) -> Option<Clause> {
+        if Self::is_clause_propagation_disproved_by_assignments(
+            assignments,
+            clause.peek().peek().peek(),
+        ) {
+            return None;
+        }
+        let r = self
+            .solvers
+            .is_clause_guaranteed_after_transition_if_assumed_and_return_new_lemma(k, clause);
+        if r.is_none() {
+            let assignment = self.get_assignment(k);
+            assignments.push(assignment);
+        }
+
+        r
+    }
+
     fn is_guaranteed_cached(
         &mut self,
         assignments: &mut Vec<Cube>,
@@ -303,28 +326,57 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
         k: usize,
         clause_index: usize,
         fractional_propagation: bool,
+        uc_trick: bool,
     ) -> bool {
         let mut de: DeltaElement<D> = self.frames[k].get_delta_at(clause_index).to_owned();
 
         let mut i = 0;
         loop {
             i += 1;
-            if self.is_guaranteed_cached(assignments, k, de.clause()) {
-                if i > 1 {
-                    self.s
-                        .pdr_stats
-                        .borrow_mut()
-                        .increment_generic_count("Fractional Propagation Successful ");
-                    self.frames[k].mark_fraction_as_propagated(de.clause().to_owned());
-                } else {
-                    self.s
-                        .pdr_stats
-                        .borrow_mut()
-                        .increment_generic_count("Propagation Successful");
+
+            if uc_trick {
+                let old_clause = de.clause().to_owned();
+                if let Some(new_clause) = self.is_guaranteed_cached_and_refine_clause(assignments, k, de.clause()) {
+                    if new_clause != old_clause {
+                        self.s.pdr_stats.borrow_mut().note_uc_trick_shortcuts();
+                    }
+                    de = self.make_delta_element(new_clause);
+                    if i > 1 {
+                        self.s
+                            .pdr_stats
+                            .borrow_mut()
+                            .increment_generic_count("Fractional Propagation Successful ");
+                        self.frames[k].mark_fraction_as_propagated(de.clause().to_owned());
+                    } else {
+                        self.s
+                            .pdr_stats
+                            .borrow_mut()
+                            .increment_generic_count("Propagation Successful");
+                    }
+                    self.insert_clause_to_exact_frame(de, k + 1, true);
+                    return true;
                 }
-                self.insert_clause_to_exact_frame(de, k + 1, true);
-                return true;
+
             }
+            else {
+                if self.is_guaranteed_cached(assignments, k, de.clause()) {
+                    if i > 1 {
+                        self.s
+                            .pdr_stats
+                            .borrow_mut()
+                            .increment_generic_count("Fractional Propagation Successful ");
+                        self.frames[k].mark_fraction_as_propagated(de.clause().to_owned());
+                    } else {
+                        self.s
+                            .pdr_stats
+                            .borrow_mut()
+                            .increment_generic_count("Propagation Successful");
+                    }
+                    self.insert_clause_to_exact_frame(de, k + 1, true);
+                    return true;
+                }
+            }
+
 
             if (!fractional_propagation) || self.definition_library.is_empty() {
                 self.s
@@ -368,7 +420,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                 .get_delta_at(clause_index)
                 .clause()
                 .to_owned();
-            self.propagate_clause(&mut assignments, k, clause_index, fractional_propagation);
+            self.propagate_clause(&mut assignments, k, clause_index, fractional_propagation,true);
             let mut was_clause_removed = clause_index >= self.frames[k].len();
             was_clause_removed =
                 was_clause_removed || self.frames[k].get_delta_at(clause_index).clause() != &b4;
