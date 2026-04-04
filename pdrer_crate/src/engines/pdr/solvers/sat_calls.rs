@@ -213,7 +213,7 @@ impl<T: PropertyDirectedReachabilitySolver> Solvers<T> {
                 }
             }
 
-            let mut result_clause = Clause::from_sequence(result.iter().copied().collect());
+            let mut result_clause = Clause::from_sequence(result.iter().copied().copied().collect::<Vec<_>>());
             if !self
                 .s
                 .fin_state
