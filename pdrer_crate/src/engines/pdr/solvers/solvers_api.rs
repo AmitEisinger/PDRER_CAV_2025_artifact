@@ -567,11 +567,15 @@ impl<T: PropertyDirectedReachabilitySolver> Solvers<T> {
         }
     }
 
+    pub fn get_sat_val(&mut self, lit: Literal, frame: usize) -> Option<bool> {
+        Self::val(&mut self.h,&self.var_map,frame,lit)
+    }
+    
     /// valid in the sat case, retrieves a variable's truth table
     /// The returned value is `None` if the formula is satisfied
     /// regardless of the value of the literal.
     #[inline]
-    pub(super) fn val(
+    pub(crate) fn val(
         h: &mut SolverHolder<T>,
         var_map: &[Variable],
         frame: usize,

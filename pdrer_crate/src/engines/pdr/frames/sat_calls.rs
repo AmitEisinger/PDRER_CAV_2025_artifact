@@ -7,7 +7,8 @@
 
 use super::Frames;
 use crate::engines::pdr::PropertyDirectedReachabilitySolver;
-use crate::formulas::{Clause, Cube};
+use crate::engines::pdr::solvers::Solvers;
+use crate::formulas::{Clause, Cube, Literal};
 use crate::function;
 use crate::models::time_stats::function_timer::FunctionTimer;
 use crate::solvers::dd::DecisionDiagramManager;
@@ -49,6 +50,11 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                                                                               clause: &Clause,
                                                                               k: usize) -> Option<Clause> {
         self.solvers.is_clause_guaranteed_after_transition_if_assumed_and_return_new_lemma(k, clause)
+    }
+
+
+    pub fn sat_val(&mut self, literal : Literal, frame: usize) -> Option<bool> {
+        self.solvers.get_sat_val(literal, frame)
     }
 
     // pub fn get_state_in_clause_a_that_has_a_predecessor_not_in_clause_b(
