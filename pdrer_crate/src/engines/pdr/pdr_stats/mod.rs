@@ -217,7 +217,7 @@ impl PDRStats {
             ),
             (
                 "Times UC trick ended up with a shorter lemma".to_string(),
-                Self.get_uc_trick_shortcuts().to_string()
+                self.get_uc_trick_shortcuts().to_string()
                 )
         ];
         let mut v: Vec<(String, String)> = self
