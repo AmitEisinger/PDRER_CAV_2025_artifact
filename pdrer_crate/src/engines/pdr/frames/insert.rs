@@ -276,14 +276,15 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
 
         // let mut another_iteration = true;
         
-        if !uc_trick {
+        let de = if !uc_trick {
             while k < self.depth() {
                 if self.is_clause_guaranteed_after_transition_if_assumed(&clause, k) {
                     k += 1;
                 } else {
                     break;
                 }
-            }    
+            }
+            self.make_delta_element(clause)
         } else {
             let mut current_lemma = clause.clone();
             while k < self.depth() {
@@ -294,11 +295,10 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                     break;
                 }
             }
-        }
-        
-        let de = self.make_delta_element(clause);
-        self.insert_clause_to_exact_frame(de, k, false);
+            self.make_delta_element(current_lemma)
+        };
 
+        self.insert_clause_to_exact_frame(de, k, false);
         k
     }
 
