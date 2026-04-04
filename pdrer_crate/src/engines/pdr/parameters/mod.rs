@@ -175,12 +175,12 @@ impl PropertyDirectedReachabilityParameters {
 
         propagate_from_lowest_changed_frame: false,
 
-        er: true,
-        er_generalization: true,
+        er: false,
+        er_generalization: false,
         er_delta: 1408,
-        er_fp: true,
-        er_fp_for_f_inf: true,
-        er_impl: true,
+        er_fp: false,
+        er_fp_for_f_inf: false,
+        er_impl: false,
         // generalize_with_extension_variables: true,
         // re_write_frame_when_bva_finds_simplification: true,
         // delta_in_frame_size_to_call_condense: 8,
