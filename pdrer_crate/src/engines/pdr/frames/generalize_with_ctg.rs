@@ -29,9 +29,9 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                 continue;
             }
             clause_clone.clear();
-            clause.extend(clause.iter().filter(|x1| {**x1 != l}).copied());
+            clause_clone.extend(clause.iter().filter(|x1| {**x1 != l}).copied());
             if self.ctg_down(&mut clause_clone, k, d, keep) {
-                *clause = clause_clone;
+                *clause = clause_clone.clone();
             } else {
                 keep.insert(l);
             }
