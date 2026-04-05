@@ -2,7 +2,6 @@
 // use
 // ************************************************************************************************
 
-use fxhash::FxHashSet;
 use super::Frames;
 use crate::engines::pdr::PropertyDirectedReachabilitySolver;
 use crate::formulas::{Clause, Literal};
@@ -20,7 +19,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
     // ********************************************************************************************
 
     // MIC method
-    fn mic(&mut self, clause: &mut Vec<Literal>, k: usize, d: usize, keep : &mut FxHashSet<Literal>) {
+    fn mic(&mut self, clause: &mut Vec<Literal>, k: usize, d: usize) {
         // iterate over the literals of the original clause
         let literals = clause.clone();
         let mut clause_clone = Vec::with_capacity(clause.len());
@@ -29,29 +28,30 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                 continue;
             }
             clause_clone.clear();
-            clause_clone.extend(clause.iter().filter(|x1| {**x1 != l}).copied());
-            if self.ctg_down(&mut clause_clone, k, d, keep) {
-                *clause = clause_clone.clone();
-            } else {
-                keep.insert(l);
+            clause_clone.extend(clause.iter().filter(|x1| **x1 != l).copied());
+            if self.ctg_down(&mut clause_clone, k, d) {
+                clause.clear();
+                clause.extend_from_slice(clause_clone.as_slice())
             }
         }
     }
 
     // Helper method `ctg_down`
-    fn ctg_down(&mut self, clause: &mut Vec<Literal>, k: usize, d: usize, keep: &mut FxHashSet<Literal>) -> bool {
+    fn ctg_down(&mut self, clause: &mut Vec<Literal>, k: usize, d: usize) -> bool {
         if d > self.s.parameters.generalize_using_ctg_max_depth {
             let c = Clause::from_sequence(clause.clone());
             if !self.is_clause_satisfied_by_all_initial_states(&c) {
                 return false;
             }
 
-            return match self.is_clause_guaranteed_after_transition_if_assumed_and_get_new_lemma(&c, k) {
+            return match self
+                .is_clause_guaranteed_after_transition_if_assumed_and_get_new_lemma(&c, k)
+            {
                 Some(new_clause) => {
                     *clause = new_clause.unpack().unpack().unpack();
                     true
                 }
-                None => { false }
+                None => false,
             };
         }
 
@@ -65,26 +65,31 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
             match self.get_predecessor_of_cube(&not_c, k) {
                 Err(stronger_cube) => {
                     let mut new_clause = !stronger_cube;
-                    let removed_literals = clause.iter().copied().filter(|l| !new_clause.contains(l)).collect::<Vec<_>>();
+                    let removed_literals = clause
+                        .iter()
+                        .copied()
+                        .filter(|l| !new_clause.contains(l))
+                        .collect::<Vec<_>>();
                     if !self
                         .s
                         .fin_state
                         .borrow()
-                        .is_clause_satisfied_by_all_initial_states(&new_clause).is_some_and(|t| {t})
+                        .is_clause_satisfied_by_all_initial_states(&new_clause)
+                        .is_some_and(|t| t)
                     {
-                        let clauses_to_add = removed_literals
+                        let literals_to_add = removed_literals
                             .iter()
                             .find(|x| self.s.fin_state.borrow().is_literal_in_initial_relation(x))
                             .copied();
-                        if let Some(clauses_to_add) = clauses_to_add {
-                            new_clause.insert(clauses_to_add.to_owned());
+                        if let Some(lit_to_add) = literals_to_add {
+                            new_clause.insert(lit_to_add.to_owned());
                             *clause = new_clause.unpack().unpack().unpack();
                         } else {
                             // Failed to generalize clause, but generalization is still good
                         }
                     }
-                    return true
-                },
+                    return true;
+                }
                 Ok((s, _)) => {
                     if d > self.s.parameters.generalize_using_ctg_max_depth {
                         return false;
@@ -111,7 +116,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                             .weights
                             .borrow()
                             .sort_literals_by_weights_fast(&mut clause_to_add);
-                        self.mic(&mut clause_to_add, j - 1, d + 1, keep);
+                        self.mic(&mut clause_to_add, j - 1, d + 1);
                         let clause_to_add = Clause::from_sequence(clause_to_add);
 
                         let de = self.make_delta_element(clause_to_add);
@@ -119,7 +124,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                             .weights
                             .borrow_mut()
                             .update_weights_on_add(de.clause().iter());
-                        self.insert_clause_to_highest_frame_possible(de.unpack_clause(), j,true);
+                        self.insert_clause_to_highest_frame_possible(de.unpack_clause(), j, true);
                     } else {
                         ctgs = 0;
                         *clause = clause
@@ -150,9 +155,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
             .iter()
             .all(|l| self.s.fin_state.borrow().is_state_literal(l)));
 
-        let mut keep : FxHashSet<Literal> = FxHashSet::default();
-
-        self.mic(&mut clause, k, 1, &mut keep);
+        self.mic(&mut clause, k, 1);
 
         Clause::from_sequence(clause)
     }
