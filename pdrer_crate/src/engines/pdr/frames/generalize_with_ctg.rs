@@ -73,7 +73,28 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
             }
             let not_c = !c;
             match self.get_predecessor_of_cube(&not_c, k) {
-                Err(_) => return true,
+                Err(stronger_cube) => {
+                    let mut new_clause = !stronger_cube;
+                    let removed_literals = clause.iter().copied().filter(|l| !new_clause.contains(l)).collect::<Vec<_>>();
+                    if !self
+                        .s
+                        .fin_state
+                        .borrow()
+                        .is_clause_satisfied_by_all_initial_states(&new_clause).is_some_and(|t| {t})
+                    {
+                        let clauses_to_add = removed_literals
+                            .iter()
+                            .find(|x| self.s.fin_state.borrow().is_literal_in_initial_relation(x))
+                            .copied();
+                        if let Some(clauses_to_add) = clauses_to_add {
+                            new_clause.insert(clauses_to_add.to_owned());
+                            *clause = new_clause.unpack().unpack().unpack();
+                        } else {
+                            // Failed to generalize clause, but generalization is still good
+                        }
+                    }
+                    return true
+                },
                 Ok((s, _)) => {
                     if d > self.s.parameters.generalize_using_ctg_max_depth {
                         return false;
