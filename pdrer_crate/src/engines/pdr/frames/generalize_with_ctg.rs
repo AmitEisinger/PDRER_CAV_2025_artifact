@@ -21,25 +21,15 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
 
     // MIC method
     fn mic(&mut self, clause: &mut Vec<Literal>, k: usize, d: usize, keep : &mut FxHashSet<Literal>) {
-        // iterate ove the literals of the original clause
+        // iterate over the literals of the original clause
         let literals = clause.clone();
+        let mut clause_clone = Vec::with_capacity(clause.len());
         for l in literals {
-            // clone clause and check if current literal is still in clause
-            let mut clause_clone = Vec::with_capacity(clause.len());
-            let mut found = false;
-            for lc in clause.iter().copied() {
-                if lc == l {
-                    found = true;
-                    continue;
-                }
-                clause_clone.push(lc);
-            }
-            if !found {
-                // this literal is no longer in the clause
-                // (it was removed by a previous ctg_down call)
+            if !clause.contains(&l) {
                 continue;
             }
-
+            clause_clone.clear();
+            clause.extend(clause.iter().filter(|x1| {**x1 != l}).copied());
             if self.ctg_down(&mut clause_clone, k, d, keep) {
                 *clause = clause_clone;
             } else {
