@@ -115,10 +115,10 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                         return false; // Theorem rejection
                     }
 
-                    let keep_projection_in_assignment =  self.solvers.extract_variables_from_solver(k,keep_vars.iter());
+                 /*   let keep_projection_in_assignment =  self.solvers.extract_variables_from_solver(k,keep_vars.iter());
                     if keep_projection_in_assignment.iter().any(|x1| {keep.contains(x1)}){
                         return false;
-                    }
+                    }*/
                   /*  let vars = c.iter().map(|l| l.variable()).collect::<Vec<_>>();
                     let  = self.solvers.extract_variables_from_solver(k,c.iter().map(|lit| lit.variable()).collect());
 
