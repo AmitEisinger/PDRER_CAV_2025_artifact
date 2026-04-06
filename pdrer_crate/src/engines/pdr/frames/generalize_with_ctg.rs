@@ -2,6 +2,8 @@
 // use
 // ************************************************************************************************
 
+use std::collections::HashSet;
+use fxhash::{FxBuildHasher, FxHashSet};
 use super::Frames;
 use crate::engines::pdr::PropertyDirectedReachabilitySolver;
 use crate::formulas::{Clause, Literal};
@@ -23,21 +25,24 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
         // iterate over the literals of the original clause
         let literals = clause.clone();
         let mut clause_clone = Vec::with_capacity(clause.len());
+        let mut keep : HashSet<Literal, FxBuildHasher> = FxHashSet::default();
         for l in literals {
-            if !clause.contains(&l) {
+            if !clause.contains(&l) || keep.contains(&l) {
                 continue;
             }
             clause_clone.clear();
             clause_clone.extend(clause.iter().filter(|x1| **x1 != l).copied());
-            if self.ctg_down(&mut clause_clone, k, d) {
+            if self.ctg_down(&mut clause_clone, k, d, &keep) {
                 clause.clear();
                 clause.extend_from_slice(clause_clone.as_slice())
+            } else {
+                keep.insert(l);
             }
         }
     }
 
     // Helper method `ctg_down`
-    fn ctg_down(&mut self, clause: &mut Vec<Literal>, k: usize, d: usize) -> bool {
+    fn ctg_down(&mut self, clause: &mut Vec<Literal>, k: usize, d: usize, keep: &FxHashSet<Literal>) -> bool {
         if d > self.s.parameters.generalize_using_ctg_max_depth {
             let c = Clause::from_sequence(clause.clone());
             if !self.is_clause_satisfied_by_all_initial_states(&c) {
