@@ -24,7 +24,7 @@ pub struct PDRStats {
     lic_analysis_calls: usize,
     lic_analysis_successful_calls: usize,
     generic_counts: FxHashMap<&'static str, usize>,
-    uc_trick_shortcuts: usize
+    ctg_theorem_rejections: usize
 }
 
 // ************************************************************************************************
@@ -44,16 +44,16 @@ impl PDRStats {
             lic_analysis_calls: 0,
             lic_analysis_successful_calls: 0,
             generic_counts: Default::default(),
-            uc_trick_shortcuts: 0,
+            ctg_theorem_rejections: 0,
         }
     }
 
-    pub fn note_uc_trick_shortcuts(&mut self) {
-        self.uc_trick_shortcuts += 1;
+    pub fn note_ctg_theorem_rejection(&mut self) {
+        self.ctg_theorem_rejections += 1;
     }
 
-    pub fn get_uc_trick_shortcuts(&self) -> usize {
-        self.uc_trick_shortcuts
+    pub fn get_ctg_theorem_rejections(&self) -> usize {
+        self.ctg_theorem_rejections
     }
 
     pub fn note_ternary_simulation(&mut self, size_before: usize, size_after: usize) {
@@ -216,8 +216,8 @@ impl PDRStats {
                 Self::get_memory_usage().unwrap_or_default().to_string(),
             ),
             (
-                "Times UC trick ended up with a shorter lemma".to_string(),
-                self.get_uc_trick_shortcuts().to_string()
+                "Num CTG Theorem Rejection".to_string(),
+                self.get_ctg_theorem_rejections().to_string()
                 )
         ];
         let mut v: Vec<(String, String)> = self

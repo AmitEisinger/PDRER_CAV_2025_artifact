@@ -471,7 +471,8 @@ fn main() -> ExitCode {
         print_if_verbose!(args.verbose, "Result checked successfully!");
     }
 
-    println!("Successful UC tricks: {:?}", solver.s.pdr_stats.borrow().get_uc_trick_shortcuts());
+    println!("CTG Theorem Rejections: {:?}", solver.s.pdr_stats.borrow().get_ctg_theorem_rejections());
+    
 
     // print result
     let r = match &pr {

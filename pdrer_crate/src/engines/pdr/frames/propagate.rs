@@ -239,7 +239,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
         None
     }
 
-    fn get_assignment(&mut self, k: usize) -> Cube {
+    pub fn get_assignment(&mut self, k: usize) -> Cube {
         let mut assignment = self.solvers.extract_variables_from_solver(
             k,
             self.s
@@ -335,11 +335,11 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
             i += 1;
 
             if uc_trick {
-                let old_clause = de.clause().to_owned();
+                // let old_clause = de.clause().to_owned();
                 if let Some(new_clause) = self.is_guaranteed_cached_and_refine_clause(assignments, k, de.clause()) {
-                    if new_clause != old_clause {
-                        self.s.pdr_stats.borrow_mut().note_uc_trick_shortcuts();
-                    }
+/*                    if new_clause != old_clause {
+                        self.s.pdr_stats.borrow_mut().note_ctg_theorem_rejection();
+                    }*/
                     de = self.make_delta_element(new_clause);
                     if i > 1 {
                         self.s

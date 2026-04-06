@@ -295,9 +295,9 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                     break;
                 }
             }
-            if current_lemma.len() < clause.len(){
-                self.s.pdr_stats.borrow_mut().note_uc_trick_shortcuts();
-            }
+/*            if current_lemma.len() < clause.len(){
+                self.s.pdr_stats.borrow_mut().note_ctg_theorem_rejection();
+            }*/
             self.make_delta_element(current_lemma)
         };
 

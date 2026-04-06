@@ -3,6 +3,7 @@
 // ************************************************************************************************
 
 use std::collections::HashSet;
+use std::iter;
 use fxhash::{FxBuildHasher, FxHashSet};
 use super::Frames;
 use crate::engines::pdr::PropertyDirectedReachabilitySolver;
@@ -59,7 +60,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                 None => false,
             };
         }
-
+        let keep_vars = keep.iter().map(|l| l.variable()).collect::<Vec<_>>();
         let mut ctgs = 0;
         loop {
             let c = Clause::from_sequence(clause.clone());
@@ -99,6 +100,31 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                     if d > self.s.parameters.generalize_using_ctg_max_depth {
                         return false;
                     }
+
+                    if clause.iter().any(|x2| {
+                        if keep.contains(x2) {
+                            let c  =self.solvers.extract_variables_from_solver(k,iter::once(x2.variable()));
+                            assert!(c.len() <= 1);
+                            if !c.is_empty() && keep.contains(&c.unpack().unpack().unpack()[0]) {
+                                return true;
+                            }
+                        }
+                        false
+                    }) {
+                        self.s.pdr_stats.borrow_mut().note_ctg_theorem_rejection();
+                        return false; // Theorem rejection
+                    }
+
+                    let keep_projection_in_assignment =  self.solvers.extract_variables_from_solver(k,keep_vars.iter());
+                    if keep_projection_in_assignment.iter().any(|x1| {keep.contains(x1)}){
+                        return false;
+                    }
+                  /*  let vars = c.iter().map(|l| l.variable()).collect::<Vec<_>>();
+                    let  = self.solvers.extract_variables_from_solver(k,c.iter().map(|lit| lit.variable()).collect());
+
+                    if assignment.iter().any(|l| keep.contains(l)) {
+                        return false;
+                    }*/
 
                     let not_s = !s.to_owned();
                     if ctgs < self.s.parameters.generalize_using_ctg_max_ctgs
