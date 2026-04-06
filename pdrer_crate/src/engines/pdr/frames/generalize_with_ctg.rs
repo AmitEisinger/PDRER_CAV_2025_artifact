@@ -60,7 +60,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                 None => false,
             };
         }
-        let keep_vars = keep.iter().map(|l| l.variable()).collect::<Vec<_>>();
+        let keep_vars = keep.iter().map(|l| l.to_owned().variable()).collect::<Vec<_>>();
         let mut ctgs = 0;
         loop {
             let c = Clause::from_sequence(clause.clone());
