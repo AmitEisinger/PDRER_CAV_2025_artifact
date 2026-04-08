@@ -24,6 +24,8 @@ pub struct PDRStats {
     lic_analysis_calls: usize,
     lic_analysis_successful_calls: usize,
     generic_counts: FxHashMap<&'static str, usize>,
+    ctg_success: usize,
+    ctg_failure: usize,
     ctg_theorem_rejections: usize
 }
 
@@ -44,8 +46,26 @@ impl PDRStats {
             lic_analysis_calls: 0,
             lic_analysis_successful_calls: 0,
             generic_counts: Default::default(),
+            ctg_success: 0,
+            ctg_failure: 0,
             ctg_theorem_rejections: 0,
         }
+    }
+
+    pub fn note_ctg_success(&mut self) {
+        self.ctg_success += 1;
+    }
+
+    pub fn get_ctg_success(&self) -> usize {
+        self.ctg_success
+    }
+
+    pub fn note_ctg_failure(&mut self) {
+        self.ctg_failure += 1;
+    }
+
+    pub fn get_ctg_failure(&self) -> usize {
+        self.ctg_failure
     }
 
     pub fn note_ctg_theorem_rejection(&mut self) {
@@ -55,7 +75,9 @@ impl PDRStats {
     pub fn get_ctg_theorem_rejections(&self) -> usize {
         self.ctg_theorem_rejections
     }
-
+    
+    
+    
     pub fn note_ternary_simulation(&mut self, size_before: usize, size_after: usize) {
         self.ternary_simulation_reductions
             .push((size_before, size_after));
@@ -214,6 +236,14 @@ impl PDRStats {
             (
                 "Total memory used (MB)".to_string(),
                 Self::get_memory_usage().unwrap_or_default().to_string(),
+            ),
+            (
+                "Num CTG Success".to_string(),
+                self.get_ctg_success().to_string()
+            ),
+            (
+                "Num CTG Failure".to_string(),
+                self.get_ctg_failure().to_string()
             ),
             (
                 "Num CTG Theorem Rejection".to_string(),

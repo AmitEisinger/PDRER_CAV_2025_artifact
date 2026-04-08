@@ -470,8 +470,16 @@ fn main() -> ExitCode {
         }
         print_if_verbose!(args.verbose, "Result checked successfully!");
     }
-
-    println!("CTG Theorem Rejections: {:?}", solver.s.pdr_stats.borrow().get_ctg_theorem_rejections());
+    
+    
+    let ctg_success = solver.s.pdr_stats.borrow().get_ctg_success();
+    let ctg_failure = solver.s.pdr_stats.borrow().get_ctg_failure();
+    let ctg_theorem_rejections = solver.s.pdr_stats.borrow().get_ctg_theorem_rejections();
+    
+    
+    println!("CTG Successes: {:?}, CTG Failure: {:?}, of them due to keep set: {:?}", ctg_success, ctg_failure, ctg_theorem_rejections);
+    println!("CTG success rate: {:?}", ctg_success as f64 / (ctg_success + ctg_failure) as f64);
+    println!("CTG Keep set rejection rate (w.r.t. CTG failures): {:?}", ctg_theorem_rejections as f64 / ctg_failure as f64);
     
 
     // print result

@@ -34,11 +34,11 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
             clause_clone.clear();
             clause_clone.extend(clause.iter().filter(|x1| **x1 != l).copied());
             if self.ctg_down(&mut clause_clone, k, d, &keep) {
-                // INC success counter
+                self.s.pdr_stats.borrow_mut().note_ctg_success();
                 clause.clear();
                 clause.extend_from_slice(clause_clone.as_slice())
             } else {
-                // INC fail counter
+                self.s.pdr_stats.borrow_mut().note_ctg_failure();
                 keep.insert(l);
             }
         }
@@ -173,6 +173,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                         self.insert_clause_to_highest_frame_possible(de.unpack_clause(), j, true);
                     } else {
                         ctgs = 0;
+
                         if clause.iter().any(|l| !not_s.contains(l) && keep.contains(l)) {
                             self.s.pdr_stats.borrow_mut().note_ctg_theorem_rejection();
                             return false;
