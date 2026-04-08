@@ -118,9 +118,9 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                             }
                             assert_eq!(c.len(), 1);
                             if x2.is_negated() {
-                                c = Cube::from_ordered_set(vec![!c[0]])
+                                c = Cube::from_ordered_set(vec![!c.max_literal().unwrap()])
                             }
-                            if x2 == c[0] {
+                            if c.contains(x2) {
                                 return true;
                             }
                         }
