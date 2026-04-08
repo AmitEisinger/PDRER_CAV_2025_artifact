@@ -2,15 +2,15 @@
 // use
 // ************************************************************************************************
 
-use std::collections::HashSet;
-use std::iter;
-use fxhash::{FxBuildHasher, FxHashSet};
 use super::Frames;
 use crate::engines::pdr::PropertyDirectedReachabilitySolver;
-use crate::formulas::{Clause, Literal};
+use crate::formulas::{Clause, Cube, Literal};
 use crate::function;
 use crate::models::time_stats::function_timer::FunctionTimer;
 use crate::solvers::dd::DecisionDiagramManager;
+use fxhash::{FxBuildHasher, FxHashSet};
+use std::collections::HashSet;
+use std::iter;
 
 // ************************************************************************************************
 // impl
@@ -26,7 +26,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
         // iterate over the literals of the original clause
         let literals = clause.clone();
         let mut clause_clone = Vec::with_capacity(clause.len());
-        let mut keep : HashSet<Literal, FxBuildHasher> = FxHashSet::default();
+        let mut keep: HashSet<Literal, FxBuildHasher> = FxHashSet::default();
         for l in literals {
             if !clause.contains(&l) || keep.contains(&l) {
                 continue;
@@ -34,16 +34,24 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
             clause_clone.clear();
             clause_clone.extend(clause.iter().filter(|x1| **x1 != l).copied());
             if self.ctg_down(&mut clause_clone, k, d, &keep) {
+                // INC success counter
                 clause.clear();
                 clause.extend_from_slice(clause_clone.as_slice())
             } else {
+                // INC fail counter
                 keep.insert(l);
             }
         }
     }
 
     // Helper method `ctg_down`
-    fn ctg_down(&mut self, clause: &mut Vec<Literal>, k: usize, d: usize, keep: &FxHashSet<Literal>) -> bool {
+    fn ctg_down(
+        &mut self,
+        clause: &mut Vec<Literal>,
+        k: usize,
+        d: usize,
+        keep: &FxHashSet<Literal>,
+    ) -> bool {
         if d > self.s.parameters.generalize_using_ctg_max_depth {
             let c = Clause::from_sequence(clause.clone());
             if !self.is_clause_satisfied_by_all_initial_states(&c) {
@@ -60,7 +68,6 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                 None => false,
             };
         }
-        let keep_vars = keep.iter().map(|l| l.to_owned().variable()).collect::<Vec<_>>();
         let mut ctgs = 0;
         loop {
             let c = Clause::from_sequence(clause.clone());
@@ -103,9 +110,17 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
 
                     if clause.iter().any(|x2| {
                         if keep.contains(x2) {
-                            let c  =self.solvers.extract_variables_from_solver(k,iter::once(x2.variable()));
-                            assert!(c.len() <= 1);
-                            if !c.is_empty() && keep.contains(&c.unpack().unpack().unpack()[0]) {
+                            let mut c = self
+                                .solvers
+                                .extract_variables_from_solver(k, iter::once(x2.variable()));
+                            if c.is_empty() {
+                                return true;
+                            }
+                            assert_eq!(c.len(), 1);
+                            if x2.is_negated() {
+                                c = Cube::from_ordered_set(vec![!c[0]])
+                            }
+                            if x2 == c[0] {
                                 return true;
                             }
                         }
@@ -115,11 +130,11 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                         return false; // Theorem rejection
                     }
 
-                 /*   let keep_projection_in_assignment =  self.solvers.extract_variables_from_solver(k,keep_vars.iter());
+                    /*   let keep_projection_in_assignment =  self.solvers.extract_variables_from_solver(k,keep_vars.iter());
                     if keep_projection_in_assignment.iter().any(|x1| {keep.contains(x1)}){
                         return false;
                     }*/
-                  /*  let vars = c.iter().map(|l| l.variable()).collect::<Vec<_>>();
+                    /*  let vars = c.iter().map(|l| l.variable()).collect::<Vec<_>>();
                     let  = self.solvers.extract_variables_from_solver(k,c.iter().map(|lit| lit.variable()).collect());
 
                     if assignment.iter().any(|l| keep.contains(l)) {
@@ -158,6 +173,10 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                         self.insert_clause_to_highest_frame_possible(de.unpack_clause(), j, true);
                     } else {
                         ctgs = 0;
+                        if clause.iter().any(|l| !not_s.contains(l) && keep.contains(l)) {
+                            self.s.pdr_stats.borrow_mut().note_ctg_theorem_rejection();
+                            return false;
+                        }
                         *clause = clause
                             .iter()
                             .filter(|l| not_s.contains(l))
