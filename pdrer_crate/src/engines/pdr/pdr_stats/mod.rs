@@ -75,9 +75,9 @@ impl PDRStats {
     pub fn get_ctg_theorem_rejections(&self) -> usize {
         self.ctg_theorem_rejections
     }
-    
-    
-    
+
+
+
     pub fn note_ternary_simulation(&mut self, size_before: usize, size_after: usize) {
         self.ternary_simulation_reductions
             .push((size_before, size_after));
