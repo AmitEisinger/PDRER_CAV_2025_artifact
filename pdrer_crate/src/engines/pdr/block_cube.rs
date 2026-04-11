@@ -41,7 +41,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager>
         // self.weights_of_literals_in_clause
         //     .update_weights_on_add(clause.iter());
         self.frames
-            .insert_clause_to_highest_frame_possible(clause, k,true)
+            .insert_clause_to_highest_frame_possible(clause, k, true)
     }
 
     pub fn add_to_f_inf(&mut self, clause: Clause) {
@@ -127,7 +127,15 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager>
             vec![]
         };
 
-        let gh = self.frames.generalize(clause, po.frame - 1);
+        let parent = if self.s.parameters.parent_pob {
+            self.proof_obligations
+                .get_trace_tree()
+                .get_parent_po_cube(&po.cube)
+        } else {
+            None
+        };
+
+        let gh = self.frames.generalize(clause, po.frame - 1, &parent);
 
         debug_assert!(self.frames.is_clause_satisfied_by_all_initial_states(&gh));
         // debug_assert!(self.frames.check());

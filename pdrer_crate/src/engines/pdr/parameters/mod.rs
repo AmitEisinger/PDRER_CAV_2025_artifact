@@ -132,6 +132,7 @@ pub struct PropertyDirectedReachabilityParameters {
     pub generalize_using_ctg: bool,
     pub generalize_using_ctg_max_depth: usize,
     pub generalize_using_ctg_max_ctgs: usize,
+    pub parent_pob: bool
 }
 
 // ************************************************************************************************
@@ -191,6 +192,7 @@ impl PropertyDirectedReachabilityParameters {
         generalize_using_ctg: true,
         generalize_using_ctg_max_depth: 1,
         generalize_using_ctg_max_ctgs: 3,
+        parent_pob: true,
     };
 
     pub fn new() -> Self {

@@ -157,4 +157,17 @@ impl TraceTree {
 
         leafs
     }
+
+    pub fn get_parent_po_cube(&self, po_cube: &Cube) -> Option<&Cube> {
+        let inner_po = self.index.get(po_cube);
+        if let Some(inner_po) = inner_po {
+            let parent_index = self.trace_tree.get(*inner_po).map(|x| &x.successor_index);
+            if let Some(parent_index) = parent_index {
+                return self.trace_tree.get(*parent_index).map(|x| &x.state);
+            }
+            None
+        } else {
+            None
+        }
+    }
 }
