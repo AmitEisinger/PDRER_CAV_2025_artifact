@@ -265,7 +265,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
         let size_before = clause.len();
 
         let parent = if self.s.parameters.parent_pob {
-            self.find_parent_lemma_of(&clause,k)
+            self.find_parent_lemma_of(&clause.to_owned(),k)
         } else {
             None
         };
