@@ -159,7 +159,7 @@ impl PropertyDirectedReachabilityParameters {
         insert_transition_clauses_reversed: false,
         insert_extension_variable_definitions_reversed: false,
         insert_frame_clauses_reversed: false,
-        use_only_one_solver: false,
+        use_only_one_solver: true,
 
         use_infinite_frame: true,
         infinite_frame_propagation_limit: usize::MAX,
