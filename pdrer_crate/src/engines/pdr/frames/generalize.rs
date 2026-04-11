@@ -265,11 +265,11 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
         let size_before = clause.len();
 
         let parent = if self.s.parameters.parent_pob {
-            self.find_parent_lemma_of(&clause.to_owned(),k)
+            self.find_parent_lemma_of(clause.to_owned(),k)
         } else {
             None
         };
-        let sorted = |clause: Clause, parent: &Option<&Clause>| -> Vec<Literal> {
+        let sorted = |clause: Clause, parent: Option<Clause>| -> Vec<Literal> {
             let mut lits: Vec<Literal> = clause.unpack().unpack().unpack();
             let (w, f) = (self.s.weights.borrow(), self.s.fin_state.borrow());
 
@@ -298,10 +298,10 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
                 .iter()
                 .all(|l| self.s.fin_state.borrow().is_state_literal(l))
         {
-            self.generalize_relative_to_frame_using_ctg(sorted(clause,&parent ), k)
+            self.generalize_relative_to_frame_using_ctg(sorted(clause,parent ), k)
         } else {
             self.generalize_relative_to_frame(
-                sorted(clause,&parent),
+                sorted(clause,parent),
                 k,
                 self.s.parameters.minimum_clause_length_to_generalize,
             )
