@@ -164,7 +164,7 @@ impl TraceTree {
             let parent_index = self.trace_tree.get(*inner_po).map(|x| &x.successor_index);
             if let Some(inner_parent_index) = parent_index {
                 if let Some(very_inner_parent_index) = inner_parent_index {
-                    return self.trace_tree.get(very_inner_parent_index).map(|x| &x.state);
+                    return self.trace_tree.get(very_inner_parent_index.to_owned()).map(|x| &x.state);
                 }
             }
             None
