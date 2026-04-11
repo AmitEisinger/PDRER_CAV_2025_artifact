@@ -257,15 +257,19 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
     // ********************************************************************************************
 
     /// Reduce literals in the clause as long as the clause remains inductive
-    pub fn generalize(&mut self, clause: Clause, k: usize, parent: &Option<&Cube>) -> Clause {
+    pub fn generalize(&mut self, clause: Clause, k: usize) -> Clause {
         let _timer = FunctionTimer::start(function!(), self.s.time_stats.clone());
 
         debug_assert!(self.is_clause_guaranteed_after_transition_if_assumed(&clause, k));
         let original_cube = !clause.to_owned();
         let size_before = clause.len();
 
-        // let cw = self.s.weights.clone();
-        let sorted = |clause: Clause, parent: &Option<&Cube>| -> Vec<Literal> {
+        let parent = if self.s.parameters.parent_pob {
+            self.find_parent_lemma_of(&clause,k)
+        } else {
+            None
+        };
+        let sorted = |clause: Clause, parent: &Option<&Clause>| -> Vec<Literal> {
             let mut lits: Vec<Literal> = clause.unpack().unpack().unpack();
             let (w, f) = (self.s.weights.borrow(), self.s.fin_state.borrow());
 
@@ -288,16 +292,16 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
             }
             lits
         };
-                
+
         let mut generalized_clause = if self.s.parameters.generalize_using_ctg
             && clause
                 .iter()
                 .all(|l| self.s.fin_state.borrow().is_state_literal(l))
         {
-            self.generalize_relative_to_frame_using_ctg(sorted(clause,parent ), k)
+            self.generalize_relative_to_frame_using_ctg(sorted(clause,&parent ), k)
         } else {
             self.generalize_relative_to_frame(
-                sorted(clause,parent),
+                sorted(clause,&parent),
                 k,
                 self.s.parameters.minimum_clause_length_to_generalize,
             )
@@ -366,7 +370,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
         // Then generalize them
         for c in clauses {
             debug_assert!(self.sanity_check());
-            let c = self.generalize(c.to_owned(), self.len() - 1, &None);
+            let c = self.generalize(c.to_owned(), self.len() - 1);
             if false {
                 println!("Clause {} ->\t{}", c, c);
             }

@@ -64,4 +64,17 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
 
         self.solvers.solve_is_cube_blocked(k, cube)
     }
+
+    pub fn find_parent_lemma_of(self, clause: &Clause, k: usize) -> Option<&Clause> {
+        if k <= 1 {
+            None
+        } else {
+            let unpacked_lemma = &clause.unpack().unpack();
+            self.frames[k - 1]
+                .get_delta()
+                .iter()
+                .find(|x| unpacked_lemma.is_subset_of(&x.clause().peek().peek()))
+                .map(|x| x.clause())
+        }
+    }
 }

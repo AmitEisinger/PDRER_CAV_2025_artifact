@@ -127,15 +127,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager>
             vec![]
         };
 
-        let parent = if self.s.parameters.parent_pob {
-            self.proof_obligations
-                .get_trace_tree()
-                .get_parent_po_cube(&po.cube)
-        } else {
-            None
-        };
-
-        let gh = self.frames.generalize(clause, po.frame - 1, &parent);
+        let gh = self.frames.generalize(clause, po.frame - 1);
 
         debug_assert!(self.frames.is_clause_satisfied_by_all_initial_states(&gh));
         // debug_assert!(self.frames.check());
