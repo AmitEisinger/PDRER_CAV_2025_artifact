@@ -65,7 +65,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
         self.solvers.solve_is_cube_blocked(k, cube)
     }
 
-    pub fn find_parent_lemma_of(self, clause: Clause, k: usize) -> Option<Clause> {
+    pub fn find_parent_lemma_of(&self, clause: Clause, k: usize) -> Option<Clause> {
         if k <= 1 {
             None
         } else {
