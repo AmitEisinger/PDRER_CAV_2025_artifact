@@ -366,7 +366,7 @@ impl<T: PropertyDirectedReachabilitySolver, D: DecisionDiagramManager> Frames<T,
         // Then generalize them
         for c in clauses {
             debug_assert!(self.sanity_check());
-            let c = self.generalize(c.to_owned(), self.len() - 1, None);
+            let c = self.generalize(c.to_owned(), self.len() - 1, &None);
             if false {
                 println!("Clause {} ->\t{}", c, c);
             }
